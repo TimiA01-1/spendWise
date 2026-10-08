@@ -71,6 +71,12 @@ func describe(fe validator.FieldError)string{
 		return "must be at least " + fe.Param() + " characters"
 	case "max":
 		return "must be at most " + fe.Param() + " characters"
+	case "len":
+		return "must be exactly " + fe.Param() + " characters"
+	case "oneof":
+		return "must be one of: " + fe.Param()
+	case "gte":
+		return "must be " + fe.Param() + " or more"
 	default:
 		return "is invalid"
 	}

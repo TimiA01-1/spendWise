@@ -9,6 +9,7 @@ import(
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"spendWise/config"
+	"spendWise/internal/account"
 	"spendWise/internal/auth"
 	"spendWise/internal/db"
 	"spendWise/internal/user"
@@ -27,6 +28,9 @@ func New(cfg *config.Config, pool *pgxpool.Pool) http.Handler{
 	userRepo := user.NewRepository(queries)
 	userSvc := user.NewService(userRepo)
 	userHandler := user.NewHandler(userSvc)
+	accountRepo := account.NewRepository(queries)
+	accountSvc := account.NewService(accountRepo)
+	accountHandler := account.NewHandler(accountSvc)
 	tokens := auth.NewTokenManager(cfg.JWTSecret, cfg.JWTTTL)
 	authSvc := auth.NewService(userRepo, tokens)
 	authHandler := auth.NewHandler(authSvc)
@@ -51,6 +55,11 @@ func New(cfg *config.Config, pool *pgxpool.Pool) http.Handler{
 	// Protected routes: everything on this group requires a valid JWT.
 	protected := v1.Group("", auth.Middleware(tokens))
 	protected.GET("/users/me", userHandler.Me)
+	protected.POST("/accounts", accountHandler.Create)
+	protected.GET("/accounts", accountHandler.List)
+	protected.GET("/accounts/:id", accountHandler.Get)
+	protected.PATCH("/accounts/:id", accountHandler.Update)
+	protected.DELETE("/accounts/:id", accountHandler.Delete)
 
 	return r
 }
