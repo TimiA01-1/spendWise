@@ -77,6 +77,12 @@ func describe(fe validator.FieldError)string{
 		return "must be one of: " + fe.Param()
 	case "gte":
 		return "must be " + fe.Param() + " or more"
+	case "gt":
+		return "must be greater than " + fe.Param()
+	case "uuid":
+		return "must be a valid UUID"
+	case "datetime":
+		return "must be a date like 2026-10-31"
 	default:
 		return "is invalid"
 	}

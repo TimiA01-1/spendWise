@@ -172,6 +172,8 @@ func writeError(c *gin.Context, err error) {
 		httpx.Error(c, http.StatusNotFound, "account_not_found", "account not found")
 	case errors.Is(err, ErrNameTaken):
 		httpx.Error(c, http.StatusConflict, "account_name_taken", err.Error())
+	case errors.Is(err, ErrHasTransactions):
+		httpx.Error(c, http.StatusConflict, "account_has_transactions", err.Error())
 	case errors.Is(err, ErrInvalidName), errors.Is(err, ErrInvalidType), errors.Is(err, ErrNegativeBalance):
 		httpx.Error(c, http.StatusUnprocessableEntity, "validation_failed", err.Error())
 	default:

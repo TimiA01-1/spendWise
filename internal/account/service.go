@@ -131,7 +131,7 @@ func validateName(name string) error {
 
 // wrap adds context to unexpected errors
 func wrap(op string, err error) error {
-	if errors.Is(err, ErrNotFound) || errors.Is(err, ErrNameTaken) {
+	if errors.Is(err, ErrNotFound) || errors.Is(err, ErrNameTaken) || errors.Is(err, ErrHasTransactions) {
 		return err
 	}
 	return fmt.Errorf("%s: %w", op, err)

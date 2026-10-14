@@ -14,9 +14,11 @@ import(
 var(
 	ErrNotFound = errors.New("account not found")
 	ErrNameTaken = errors.New("an account with this name already exists")
+	ErrHasTransactions = errors.New("account has transactions and cannot be deleted")
 )
 const(
 	pgUniqueViolation = "23505"
+	pgForeignKeyViolation = "23503"
 	nameUniqueIndex = "accounts_user_name_key"
 )
 
@@ -107,6 +109,10 @@ func (r *PGRepository) Update(ctx context.Context, userID, id uuid.UUID, name, a
 func (r *PGRepository) Delete(ctx context.Context, userID, id uuid.UUID) error {
 	n, err := r.q.DeleteAccount(ctx, db.DeleteAccountParams{ID: id, UserID: userID})
 	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == pgForeignKeyViolation{
+			return ErrHasTransactions
+		}
 		return err
 	}
 	if n == 0 {
