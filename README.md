@@ -40,6 +40,8 @@ Configured pgx connection pooling.
 Integrated sqlc for type-safe database queries.
 Added an HTTP server and health-check endpoint.
 
+
+
 Milestone 2 — Authentication:
 
 User registration with input validation.
@@ -53,6 +55,45 @@ Automated tests for authentication components.
 Multi-stage Docker build for the API.
 
 
+Milestone 3 - Financial core
+Implemented the core financial management features of SpendWise.
+
+### Account Management
+- Create financial accounts with an opening balance.
+- List and retrieve accounts belonging to the authenticated user.
+- Update account information.
+- Delete accounts that have no associated transactions.
+- Prevent users from accessing or modifying another user's accounts.
+
+### Category Management
+- List available income and expense categories.
+- Create custom categories.
+- Support built-in categories and user-owned categories.
+- Validate category ownership and transaction type compatibility.
+
+### Transaction Management
+- Create income and expense transactions.
+- Retrieve individual transactions.
+- List transaction history with filtering and pagination.
+- Update transaction details, including amounts, categories, and accounts.
+- Delete transactions and reverse their financial effects.
+- Automatically adjust account balances when transactions are created, updated, or deleted.
+
+### Financial Data Integrity
+- Use PostgreSQL transactions to ensure atomic balance updates.
+- Use row-level locking to prevent lost updates during concurrent requests.
+- Reverse the original balance effect before applying transaction changes.
+- Support moving transactions between accounts safely.
+- Validate transaction ownership, amounts, categories, and dates.
+- Prevent unauthorized access to financial records.
+
+### Validation and Testing
+- Tested account ownership and transaction authorization.
+- Tested invalid amounts, dates, and category combinations.
+- Verified balance adjustments when changing transaction amounts and types.
+- Verified balance restoration after transaction deletion.
+- Tested concurrent transaction movements between accounts.
+- Successfully ran `go build ./...`, `go vet ./...`, and `go test ./...`.
 
 
 
@@ -60,17 +101,33 @@ Multi-stage Docker build for the API.
 
 API Endpoints:
 
-The following endpoints are implemented:
+All endpoints except registration, login, and health checks require a JWT access token.
 
-Method  Endpoint  Description  Authentication
+| Method | Endpoint | Description | Authentication |
+|---|---|---|---|
+| GET | `/health` | Check API health | No |
+| POST | `/api/v1/auth/register` | Register a new user | No |
+| POST | `/api/v1/auth/login` | Log in and receive a JWT | No |
+| GET | `/api/v1/users/me` | Retrieve authenticated user profile | Yes |
+| POST | `/api/v1/accounts` | Create a financial account | Yes |
+| GET | `/api/v1/accounts` | List user's accounts | Yes |
+| GET | `/api/v1/accounts/:id` | Retrieve an account | Yes |
+| PATCH | `/api/v1/accounts/:id` | Update an account | Yes |
+| DELETE | `/api/v1/accounts/:id` | Delete an account | Yes |
+| GET | `/api/v1/categories` | List available categories | Yes |
+| POST | `/api/v1/categories` | Create a category | Yes |
+| POST | `/api/v1/transactions` | Create a transaction | Yes |
+| GET | `/api/v1/transactions` | List transactions | Yes |
+| GET | `/api/v1/transactions/:id` | Retrieve a transaction | Yes |
+| PATCH | `/api/v1/transactions/:id` | Update a transaction | Yes |
+| DELETE | `/api/v1/transactions/:id` | Delete a transaction | Yes |
 
-GET  /health  Check API health   No
+### Authentication
 
-POST /api/v1/auth/register  Register a user No
+For protected endpoints, include the JWT access token in the request header:
 
-POST /api/v1/auth/login Log in and receive a JWT  No
-
-GET /api/v1/users/me Retrieve the current user's profile  Yes
+```http
+Authorization: Bearer <your-access-token>
 
 
 
@@ -117,3 +174,18 @@ Run Tests:
 
 Compile the Application:
   go build ./...
+
+
+
+
+
+
+## Project Documentation
+
+Detailed implementation notes for each completed milestone:
+
+| Milestone | Documentation | Status |
+|---|---|---|
+| 1 — Project Foundation | [Foundation](docs/milestones/milestone-1-foundation.md) 
+| 2 — Authentication | [Authentication](docs/milestones/milestone-2-authentication.md) 
+| 3 — Financial Core | [Financial Core](docs/milestones/milestone-3-financial-core.md)
