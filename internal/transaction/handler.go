@@ -31,9 +31,9 @@ type createRequest struct {
 
 // create handles POST /api/v1/transactions
 func (h *Handler) Create(c *gin.Context){
-	userID, ok := authctx.UserID(c)
+	userID, ok := currentUser(c)
 	if !ok{
-		httpx.Error(c, http.StatusUnauthorized, "unauthorized", "authentication required")
+		//httpx.Error(c, http.StatusUnauthorized, "unauthorized", "authentication required")
 		return
 	}
 	var req createRequest
@@ -66,11 +66,120 @@ func (h *Handler) Create(c *gin.Context){
 	httpx.OK(c, http.StatusCreated, t)
 }
 
-// list handles GET /api/v1/transactions
-func (h *Handler) List(c *gin.Context){
-	userID, ok := authctx.UserID(c)
+type updateRequest struct {
+	AccountID  *string `json:"account_id" binding:"omitempty,uuid"`
+	CategoryID *string `json:"category_id" binding:"omitempty,uuid"`
+	Type       *string `json:"type" binding:"omitempty,oneof=income expense"`
+	Amount     *int64  `json:"amount" binding:"omitempty,gt=0"`
+	Note       *string `json:"note" binding:"omitempty,max=500"`
+	Date       *string `json:"date" binding:"omitempty,datetime=2006-01-02"`
+}
+
+// Get handles GET /api/v1/transactions/:id.
+func (h *Handler) Get(c *gin.Context) {
+	userID, ok := currentUser(c)
+	if !ok {
+		return
+	}
+	id, ok := transactionID(c)
+	if !ok {
+		return
+	}
+
+	t, err := h.svc.Get(c.Request.Context(), userID, id)
+	if err != nil {
+		writeError(c, err)
+		return
+	}
+	httpx.OK(c, http.StatusOK, t)
+}
+
+// update handles PATCH /api/v1/transactions/:id
+func (h *Handler) Update(c *gin.Context){
+	userID, ok := currentUser(c)
+	if !ok{
+		return
+	}
+	id, ok := transactionID(c)
+	if !ok{
+		return
+	}
+
+	var req updateRequest
+	if err := c.ShouldBindJSON(&req); err != nil{
+		httpx.BindError(c, err)
+		return
+	}
+	if req == (updateRequest{}) {
+		httpx.Error(c, http.StatusUnprocessableEntity, "validation_failed",
+			"send at least one of: account_id, category_id, type, amount, note, date")
+		return
+	}
+
+	in := UpdateInput{Type: req.Type, Amount: req.Amount, Note: req.Note}
+	if req.AccountID != nil {
+		v, _ := uuid.Parse(*req.AccountID)
+		in.AccountID = &v
+	}
+	if req.CategoryID != nil {
+		v, _ := uuid.Parse(*req.CategoryID)
+		in.CategoryID = &v
+	}
+	if req.Date != nil {
+		d, _ := time.Parse(dateLayout, *req.Date)
+		in.Date = &d
+	}
+
+	t, err := h.svc.Update(c.Request.Context(), userID, id, in)
+	if err != nil {
+		writeError(c, err)
+		return
+	}
+	httpx.OK(c, http.StatusOK, t)
+}
+
+// delete handles DELETE /api/v1/transactions/:id.
+func (h *Handler) Delete(c *gin.Context){
+	userID, ok := currentUser(c)
+	if !ok {
+		return
+	}
+	id, ok := transactionID(c)
+	if !ok {
+		return
+	}
+
+	if err := h.svc.Delete(c.Request.Context(), userID, id); err != nil {
+		writeError(c, err)
+		return
+	}
+	c.Status(http.StatusNoContent)
+}
+
+// currentUser reads the authenticated user's ID, writing a 401 if it's missing.
+func currentUser(c *gin.Context) (uuid.UUID, bool) {
+	id, ok := authctx.UserID(c)
 	if !ok {
 		httpx.Error(c, http.StatusUnauthorized, "unauthorized", "authentication required")
+	}
+	return id, ok
+}
+
+// transactionID parses the :id path parameter, writing a 400 if it isn't a UUID.
+func transactionID(c *gin.Context) (uuid.UUID, bool) {
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		httpx.Error(c, http.StatusBadRequest, "invalid_id", "transaction id must be a valid UUID")
+		return uuid.Nil, false
+	}
+	return id, true
+}
+
+// list handles GET /api/v1/transactions
+func (h *Handler) List(c *gin.Context){
+	userID, ok := currentUser(c)
+	if !ok {
+		//httpx.Error(c, http.StatusUnauthorized, "unauthorized", "authentication required")
 		return
 	}
 
@@ -144,6 +253,8 @@ func badQuery(c *gin.Context, msg string) {
 
 func writeError(c *gin.Context, err error) {
 	switch {
+	case errors.Is(err, ErrNotFound):
+		httpx.Error(c, http.StatusNotFound, "transaction_not_found", "transaction not found")
 	case errors.Is(err, ErrAccountNotFound):
 		httpx.Error(c, http.StatusUnprocessableEntity, "invalid_account", "account not found")
 	case errors.Is(err, ErrCategoryNotFound):

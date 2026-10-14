@@ -29,6 +29,21 @@ func (q *Queries) AdjustAccountBalance(ctx context.Context, arg AdjustAccountBal
 	return err
 }
 
+const deleteTransaction = `-- name: DeleteTransaction :exec
+DELETE FROM transactions
+WHERE id = $1 AND user_id = $2
+`
+
+type DeleteTransactionParams struct {
+	ID     uuid.UUID
+	UserID uuid.UUID
+}
+
+func (q *Queries) DeleteTransaction(ctx context.Context, arg DeleteTransactionParams) error {
+	_, err := q.db.Exec(ctx, deleteTransaction, arg.ID, arg.UserID)
+	return err
+}
+
 const getCategoryForUser = `-- name: GetCategoryForUser :one
 SELECT id, name, type FROM categories
 WHERE id = $1::uuid
@@ -50,6 +65,48 @@ func (q *Queries) GetCategoryForUser(ctx context.Context, arg GetCategoryForUser
 	row := q.db.QueryRow(ctx, getCategoryForUser, arg.ID, arg.UserID)
 	var i GetCategoryForUserRow
 	err := row.Scan(&i.ID, &i.Name, &i.Type)
+	return i, err
+}
+
+const getTransactionForUser = `-- name: GetTransactionForUser :one
+SELECT t.id, t.account_id, t.category_id, c.name AS category_name,
+       t.type, t.amount, t.note, t.occurred_on, t.created_at
+FROM transactions t
+JOIN categories c ON c.id = t.category_id
+WHERE t.id = $1 AND t.user_id = $2
+`
+
+type GetTransactionForUserParams struct {
+	ID     uuid.UUID
+	UserID uuid.UUID
+}
+
+type GetTransactionForUserRow struct {
+	ID           uuid.UUID
+	AccountID    uuid.UUID
+	CategoryID   uuid.UUID
+	CategoryName string
+	Type         string
+	Amount       int64
+	Note         string
+	OccurredOn   time.Time
+	CreatedAt    time.Time
+}
+
+func (q *Queries) GetTransactionForUser(ctx context.Context, arg GetTransactionForUserParams) (GetTransactionForUserRow, error) {
+	row := q.db.QueryRow(ctx, getTransactionForUser, arg.ID, arg.UserID)
+	var i GetTransactionForUserRow
+	err := row.Scan(
+		&i.ID,
+		&i.AccountID,
+		&i.CategoryID,
+		&i.CategoryName,
+		&i.Type,
+		&i.Amount,
+		&i.Note,
+		&i.OccurredOn,
+		&i.CreatedAt,
+	)
 	return i, err
 }
 
@@ -193,4 +250,94 @@ func (q *Queries) LockAccountForUser(ctx context.Context, arg LockAccountForUser
 	var id uuid.UUID
 	err := row.Scan(&id)
 	return id, err
+}
+
+const lockTransactionForUser = `-- name: LockTransactionForUser :one
+SELECT id, account_id, category_id, type, amount, note, occurred_on
+FROM transactions
+WHERE id = $1 AND user_id = $2
+FOR UPDATE
+`
+
+type LockTransactionForUserParams struct {
+	ID     uuid.UUID
+	UserID uuid.UUID
+}
+
+type LockTransactionForUserRow struct {
+	ID         uuid.UUID
+	AccountID  uuid.UUID
+	CategoryID uuid.UUID
+	Type       string
+	Amount     int64
+	Note       string
+	OccurredOn time.Time
+}
+
+// Locks the transaction row so two requests can't edit or delete the same
+// transaction at once. Returns the CURRENT values, which we need to undo.
+func (q *Queries) LockTransactionForUser(ctx context.Context, arg LockTransactionForUserParams) (LockTransactionForUserRow, error) {
+	row := q.db.QueryRow(ctx, lockTransactionForUser, arg.ID, arg.UserID)
+	var i LockTransactionForUserRow
+	err := row.Scan(
+		&i.ID,
+		&i.AccountID,
+		&i.CategoryID,
+		&i.Type,
+		&i.Amount,
+		&i.Note,
+		&i.OccurredOn,
+	)
+	return i, err
+}
+
+const updateTransaction = `-- name: UpdateTransaction :one
+UPDATE transactions
+SET account_id  = $1,
+    category_id = $2,
+    type        = $3,
+    amount      = $4,
+    note        = $5,
+    occurred_on = $6,
+    updated_at  = now()
+WHERE id = $7 AND user_id = $8
+RETURNING id, user_id, account_id, category_id, type, amount, note, occurred_on, created_at, updated_at
+`
+
+type UpdateTransactionParams struct {
+	AccountID  uuid.UUID
+	CategoryID uuid.UUID
+	Type       string
+	Amount     int64
+	Note       string
+	OccurredOn time.Time
+	ID         uuid.UUID
+	UserID     uuid.UUID
+}
+
+func (q *Queries) UpdateTransaction(ctx context.Context, arg UpdateTransactionParams) (Transaction, error) {
+	row := q.db.QueryRow(ctx, updateTransaction,
+		arg.AccountID,
+		arg.CategoryID,
+		arg.Type,
+		arg.Amount,
+		arg.Note,
+		arg.OccurredOn,
+		arg.ID,
+		arg.UserID,
+	)
+	var i Transaction
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.AccountID,
+		&i.CategoryID,
+		&i.Type,
+		&i.Amount,
+		&i.Note,
+		&i.OccurredOn,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }

@@ -36,3 +36,34 @@ WHERE t.user_id = sqlc.arg(user_id)::uuid
   AND t.occurred_on <= sqlc.arg(to_date)::date
 ORDER BY t.occurred_on DESC, t.created_at DESC, t.id
 LIMIT sqlc.arg(page_limit)::int OFFSET sqlc.arg(page_offset)::int;
+
+-- name: GetTransactionForUser :one
+SELECT t.id, t.account_id, t.category_id, c.name AS category_name,
+       t.type, t.amount, t.note, t.occurred_on, t.created_at
+FROM transactions t
+JOIN categories c ON c.id = t.category_id
+WHERE t.id = sqlc.arg(id) AND t.user_id = sqlc.arg(user_id);
+
+-- name: LockTransactionForUser :one
+-- Locks the transaction row so two requests can't edit or delete the same
+-- transaction at once. Returns the CURRENT values, which we need to undo.
+SELECT id, account_id, category_id, type, amount, note, occurred_on
+FROM transactions
+WHERE id = sqlc.arg(id) AND user_id = sqlc.arg(user_id)
+FOR UPDATE;
+
+-- name: UpdateTransaction :one
+UPDATE transactions
+SET account_id  = sqlc.arg(account_id),
+    category_id = sqlc.arg(category_id),
+    type        = sqlc.arg(type),
+    amount      = sqlc.arg(amount),
+    note        = sqlc.arg(note),
+    occurred_on = sqlc.arg(occurred_on),
+    updated_at  = now()
+WHERE id = sqlc.arg(id) AND user_id = sqlc.arg(user_id)
+RETURNING *;
+
+-- name: DeleteTransaction :exec
+DELETE FROM transactions
+WHERE id = sqlc.arg(id) AND user_id = sqlc.arg(user_id);

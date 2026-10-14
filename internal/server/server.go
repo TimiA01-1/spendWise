@@ -72,6 +72,9 @@ func New(cfg *config.Config, pool *pgxpool.Pool) http.Handler{
 	protected.POST("/categories", categoryHandler.Create)
 	protected.POST("/transactions", txHandler.Create)
 	protected.GET("/transactions", txHandler.List)
+	protected.GET("/transactions/:id", txHandler.Get)
+	protected.PATCH("/transactions/:id", txHandler.Update)
+	protected.DELETE("/transactions/:id", txHandler.Delete)
 
 	return r
 }
