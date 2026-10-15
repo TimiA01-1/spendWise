@@ -13,6 +13,7 @@ import(
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"spendWise/internal/db"
+	"spendWise/internal/budget"
 )
 
 var(
@@ -131,7 +132,14 @@ func (r *PGRepository) Create(ctx context.Context, userID uuid.UUID, in NewTrans
 	//	return Transaction{}, fmt.Errorf("adjust balance: %w", err)
 	//}
 
-	// 5. makes it permanent
+	// 5. for epenses, check thebudgets this counts towards and record any alerts
+	if in.Type == TypeExpense{
+		if err := budget.RecordAlerts(ctx, qtx, userID, in.CategoryID, in.Date); err != nil {
+			return Transaction{}, fmt.Errorf("record alerts: %w", err)
+		}
+	}
+
+	// 6. makes it permanent
 	if err := tx.Commit(ctx); err != nil {
 		return Transaction{}, fmt.Errorf("commit: %w", err)
 	}
@@ -305,6 +313,13 @@ func (r *PGRepository) Update(ctx context.Context, userID, id uuid.UUID, in Upda
 		}
 		if err := adjust(ctx, qtx, userID, accountID, newEffect); err != nil {
 			return Transaction{}, err
+		}
+	}
+
+	// 7. check the budgets for edited expense category and month
+	if txType == TypeExpense {
+		if err := budget.RecordAlerts(ctx, qtx, userID, categoryID, date); err != nil {
+			return Transaction{}, fmt.Errorf("record alerts: %w", err)
 		}
 	}
 

@@ -22,6 +22,19 @@ type Account struct {
 	UpdatedAt time.Time
 }
 
+type Alert struct {
+	ID          uuid.UUID
+	UserID      uuid.UUID
+	BudgetID    uuid.UUID
+	Month       time.Time
+	Level       string
+	Amount      int64
+	Spent       int64
+	PercentUsed int32
+	ReadAt      pgtype.Timestamptz
+	CreatedAt   time.Time
+}
+
 type Budget struct {
 	ID             uuid.UUID
 	UserID         uuid.UUID

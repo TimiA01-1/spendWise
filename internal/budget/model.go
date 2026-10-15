@@ -25,7 +25,7 @@ const(
 type Budget struct{
 	ID uuid.UUID `json:"id"`
 	CategoryID *uuid.UUID `json:"category_id"`
-	CategoryName string `json:"amount"`
+	CategoryName string `json:"category_name"`
 	Amount int64 `json:"amount"`
 	AlertThreshold int `json:"alert_threshold"`
 	CreatedAt time.Time `json:"created_at"`
