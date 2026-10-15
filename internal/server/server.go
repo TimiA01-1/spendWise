@@ -14,6 +14,7 @@ import(
 	"spendWise/internal/db"
 	"spendWise/internal/user"
 	"spendWise/internal/transaction"
+	"spendWise/internal/budget"
 	"spendWise/internal/category"
 	"spendWise/pkg/httpx"
 )
@@ -39,6 +40,9 @@ func New(cfg *config.Config, pool *pgxpool.Pool) http.Handler{
 	txRepo := transaction.NewRepository(pool, queries)
 	txSvc := transaction.NewService(txRepo)
 	txHandler := transaction.NewHandler(txSvc)
+	budgetRepo := budget.NewRepository(queries)
+	budgetSvc := budget.NewService(budgetRepo)
+	budgetHandler := budget.NewHandler(budgetSvc)
 	tokens := auth.NewTokenManager(cfg.JWTSecret, cfg.JWTTTL)
 	authSvc := auth.NewService(userRepo, tokens)
 	authHandler := auth.NewHandler(authSvc)
@@ -75,6 +79,10 @@ func New(cfg *config.Config, pool *pgxpool.Pool) http.Handler{
 	protected.GET("/transactions/:id", txHandler.Get)
 	protected.PATCH("/transactions/:id", txHandler.Update)
 	protected.DELETE("/transactions/:id", txHandler.Delete)
+	protected.POST("/budgets", budgetHandler.Create)
+	protected.GET("/budgets", budgetHandler.List)
+	protected.PATCH("/budgets/:id", budgetHandler.Update)
+	protected.DELETE("/budgets/:id", budgetHandler.Delete)
 
 	return r
 }
