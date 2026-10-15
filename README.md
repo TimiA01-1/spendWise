@@ -96,7 +96,34 @@ Implemented the core financial management features of SpendWise.
 - Successfully ran `go build ./...`, `go vet ./...`, and `go test ./...`.
 
 
+## Milestone 4 — Budget Engine
 
+Implemented monthly budget management, spending utilization calculations, and automatic budget alerts.
+
+### Budget Management
+- Create monthly budgets with category-specific spending limits.
+- List, update, and delete budgets.
+- Calculate monthly spending and budget utilization percentages.
+- Determine budget status based on spending thresholds.
+- Validate budget data and enforce user ownership.
+
+### Budget Alerts
+- Generate warning alerts when spending reaches 80% of a budget.
+- Generate limit-reached alerts when spending reaches or exceeds 100%.
+- Prevent duplicate alerts for the same budget, month, and threshold.
+- Generate alerts during relevant transaction creation and updates.
+- Store alerts atomically with the associated transaction changes.
+- Support listing alerts, filtering unread alerts, and marking alerts as read.
+- Prevent users from accessing another user's alerts.
+- Automatically remove associated alerts when a budget is deleted.
+
+### Validation and Testing
+- Verified budget utilization and monthly spending calculations.
+- Tested warning and limit-reached alert generation.
+- Verified duplicate prevention across repeated threshold crossings.
+- Tested alert read tracking, ownership, and invalid requests.
+- Verified alert deletion through database cascading.
+- Successfully ran `go build ./...`, `go vet ./...`, and `go test ./...`.
 
 
 API Endpoints:
@@ -121,6 +148,14 @@ All endpoints except registration, login, and health checks require a JWT access
 | GET | `/api/v1/transactions/:id` | Retrieve a transaction | Yes |
 | PATCH | `/api/v1/transactions/:id` | Update a transaction | Yes |
 | DELETE | `/api/v1/transactions/:id` | Delete a transaction | Yes |
+| POST | `/api/v1/budgets` | Create a monthly budget | Yes |
+| GET | `/api/v1/budgets` | List budgets and utilization | Yes |
+| PATCH | `/api/v1/budgets/:id` | Update a budget | Yes |
+| DELETE | `/api/v1/budgets/:id` | Delete a budget | Yes |
+| GET | `/api/v1/alerts` | List budget alerts | Yes |
+| PATCH | `/api/v1/alerts/:id/read` | Mark an alert as read | Yes |
+
+
 
 ### Authentication
 
@@ -186,6 +221,7 @@ Detailed implementation notes for each completed milestone:
 
 | Milestone | Documentation | Status |
 |---|---|---|
-| 1 — Project Foundation | [Foundation](docs/milestones/milestone-1-foundation.md) 
-| 2 — Authentication | [Authentication](docs/milestones/milestone-2-authentication.md) 
-| 3 — Financial Core | [Financial Core](docs/milestones/milestone-3-financial-core.md)
+| 1 — Project Foundation | [Foundation](docs/milestones/milestone-1-foundation.md) | Complete |
+| 2 — Authentication | [Authentication](docs/milestones/milestone-2-authentication.md) | Complete |
+| 3 — Financial Core | [Financial Core](docs/milestones/milestone-3-financial-core.md) | Complete |
+| 4 — Budget Engine | [Budget Engine](docs/milestones/milestone-4-budget-engine.md) | Complete |
