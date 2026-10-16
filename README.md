@@ -126,6 +126,50 @@ Implemented monthly budget management, spending utilization calculations, and au
 - Successfully ran `go build ./...`, `go vet ./...`, and `go test ./...`.
 
 
+
+## Milestone 5 — Insights
+
+Implemented a financial dashboard and reporting features to help users understand their income, expenses, account balances, spending patterns, and budget performance.
+
+### Financial Dashboard
+- Display current account balances grouped by currency.
+- Calculate monthly income, expenses, and net income.
+- Retrieve the 10 most recent transactions.
+- Display monthly budget utilization, remaining amounts, and budget status.
+- Show the number of unread budget alerts.
+- Support optional month filtering using `YYYY-MM`.
+- Use PostgreSQL read-only `REPEATABLE READ` transactions for consistent dashboard data.
+
+### Monthly Financial Reports
+- Generate monthly income, expense, and net income summaries.
+- Display transaction counts for each currency.
+- Compare current-month expenses with the previous month.
+- Calculate absolute and percentage changes in spending.
+- Provide income and expense breakdowns by category.
+- Calculate category percentages to one decimal place, rounded down.
+- Return `null` for percentage changes when previous-month spending is zero.
+
+### Category Reports
+- Generate category-based reports for custom date ranges.
+- Support income and expense filtering.
+- Include both start and end dates in the reporting period.
+- Calculate category totals, transaction counts, and spending percentages.
+- Keep financial totals separated by currency.
+- Validate date formats, date ranges, and transaction types.
+
+### Validation and Testing
+- Verified dashboard income, expenses, balances, and currency separation.
+- Tested recent transaction limits and budget alert integration.
+- Verified monthly reports and previous-month comparisons.
+- Tested category percentages and inclusive date ranges.
+- Confirmed financial totals agree between dashboard and reports.
+- Tested invalid requests and authenticated user isolation.
+- Successfully ran `go build ./...`, `go vet ./...`, and `go test ./...`.
+
+
+
+
+
 API Endpoints:
 
 All endpoints except registration, login, and health checks require a JWT access token.
@@ -154,6 +198,9 @@ All endpoints except registration, login, and health checks require a JWT access
 | DELETE | `/api/v1/budgets/:id` | Delete a budget | Yes |
 | GET | `/api/v1/alerts` | List budget alerts | Yes |
 | PATCH | `/api/v1/alerts/:id/read` | Mark an alert as read | Yes |
+| GET | `/api/v1/dashboard` | Retrieve financial dashboard with optional month filter | Yes |
+| GET | `/api/v1/reports/monthly` | Retrieve monthly financial report and spending comparison | Yes |
+| GET | `/api/v1/reports/categories` | Retrieve category breakdown for a date range | Yes |
 
 
 
@@ -225,3 +272,5 @@ Detailed implementation notes for each completed milestone:
 | 2 — Authentication | [Authentication](docs/milestones/milestone-2-authentication.md) | Complete |
 | 3 — Financial Core | [Financial Core](docs/milestones/milestone-3-financial-core.md) | Complete |
 | 4 — Budget Engine | [Budget Engine](docs/milestones/milestone-4-budget-engine.md) | Complete |
+| 5 — Insights | [Insights](docs/milestones/milestone-5-insights.md) | Complete |
+

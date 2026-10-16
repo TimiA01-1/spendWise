@@ -16,6 +16,8 @@ import(
 	"spendWise/internal/transaction"
 	"spendWise/internal/budget"
 	"spendWise/internal/alert"
+	"spendWise/internal/dashboard"
+	"spendWise/internal/report"
 	"spendWise/internal/category"
 	"spendWise/pkg/httpx"
 )
@@ -47,6 +49,12 @@ func New(cfg *config.Config, pool *pgxpool.Pool) http.Handler{
 	alertRepo := alert.NewRepository(queries)
 	alertSvc := alert.NewService(alertRepo)
 	alertHandler := alert.NewHandler(alertSvc)
+	dashboardRepo := dashboard.NewRepository(pool, queries)
+	dashboardSvc := dashboard.NewService(dashboardRepo)
+	dashboardHandler := dashboard.NewHandler(dashboardSvc)
+	reportRepo := report.NewRepository(pool, queries)
+	reportSvc := report.NewService(reportRepo)
+	reportHandler := report.NewHandler(reportSvc)
 	tokens := auth.NewTokenManager(cfg.JWTSecret, cfg.JWTTTL)
 	authSvc := auth.NewService(userRepo, tokens)
 	authHandler := auth.NewHandler(authSvc)
@@ -89,6 +97,9 @@ func New(cfg *config.Config, pool *pgxpool.Pool) http.Handler{
 	protected.DELETE("/budgets/:id", budgetHandler.Delete)
 	protected.GET("/alerts", alertHandler.List)
 	protected.PATCH("/alerts/:id/read", alertHandler.MarkRead)
+	protected.GET("/dashboard", dashboardHandler.Get)
+	protected.GET("/reports/monthly", reportHandler.Monthly)
+	protected.GET("/reports/categories", reportHandler.Categories)
 
 	return r
 }
