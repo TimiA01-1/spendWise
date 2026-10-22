@@ -19,6 +19,7 @@ import(
 	"spendWise/internal/dashboard"
 	"spendWise/internal/report"
 	"spendWise/internal/category"
+	"spendWise/internal/recurring"
 	"spendWise/pkg/httpx"
 )
 
@@ -55,6 +56,9 @@ func New(cfg *config.Config, pool *pgxpool.Pool) http.Handler{
 	reportRepo := report.NewRepository(pool, queries)
 	reportSvc := report.NewService(reportRepo)
 	reportHandler := report.NewHandler(reportSvc)
+	recurringRepo := recurring.NewRepository(pool, queries)
+	recurringSvc := recurring.NewService(recurringRepo, time.Now)
+	recurringHandler := recurring.NewHandler(recurringSvc)
 	tokens := auth.NewTokenManager(cfg.JWTSecret, cfg.JWTTTL)
 	authSvc := auth.NewService(userRepo, tokens)
 	authHandler := auth.NewHandler(authSvc)
@@ -100,6 +104,10 @@ func New(cfg *config.Config, pool *pgxpool.Pool) http.Handler{
 	protected.GET("/dashboard", dashboardHandler.Get)
 	protected.GET("/reports/monthly", reportHandler.Monthly)
 	protected.GET("/reports/categories", reportHandler.Categories)
+	protected.POST("/recurring-transactions", recurringHandler.Create)
+	protected.GET("/recurring-transactions", recurringHandler.List)
+	protected.PATCH("/recurring-transactions/:id", recurringHandler.Update)
+	protected.DELETE("/recurring-transactions/:id", recurringHandler.Delete)
 
 	return r
 }

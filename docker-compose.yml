@@ -25,6 +25,7 @@ services:
       DATABASE_URL: postgres://${POSTGRES_USER:-spendwise}:${POSTGRES_PASSWORD:-spendwise}@postgres:5432/${POSTGRES_DB:-spendwise}?sslmode=disable
       JWT_SECRET: ${JWT_SECRET:?copy .env.example to .env and set JWT_SECRET}
       JWT_TTL: ${JWT_TTL:-24h}
+      RECURRING_INTERVAL: ${RECURRING_INTERVAL:-1m}
     depends_on:
       migrate:
         condition: service_completed_successfully

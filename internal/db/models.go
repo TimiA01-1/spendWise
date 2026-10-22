@@ -53,7 +53,7 @@ type Category struct {
 	CreatedAt time.Time
 }
 
-type Transaction struct {
+type RecurringTransaction struct {
 	ID         uuid.UUID
 	UserID     uuid.UUID
 	AccountID  uuid.UUID
@@ -61,9 +61,32 @@ type Transaction struct {
 	Type       string
 	Amount     int64
 	Note       string
-	OccurredOn time.Time
+	Frequency  string
+	StartDate  time.Time
+	EndDate    pgtype.Date
+	NextIndex  int32
+	NextRunOn  time.Time
+	Status     string
+	Runs       int32
+	LastError  string
+	RetryAt    time.Time
 	CreatedAt  time.Time
 	UpdatedAt  time.Time
+}
+
+type Transaction struct {
+	ID           uuid.UUID
+	UserID       uuid.UUID
+	AccountID    uuid.UUID
+	CategoryID   uuid.UUID
+	Type         string
+	Amount       int64
+	Note         string
+	OccurredOn   time.Time
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+	RecurringID  pgtype.UUID
+	RecurringFor pgtype.Date
 }
 
 type User struct {

@@ -8,11 +8,13 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
 	"spendWise/config"
-	//"spendWise/internal/db"
+	"spendWise/internal/db"
+	"spendWise/internal/recurring"
 	"spendWise/internal/server"
 	//"spendWise/internal/user"
 	"spendWise/pkg/postgres"
@@ -38,6 +40,20 @@ func run() error{
 		return fmt.Errorf("connect database: %v", err)
 	}
 	defer pool.Close()
+
+	// the background worker that creates transactions from recurring rules
+	var workers sync.WaitGroup
+	worker := recurring.NewProcessor(pool, db.New(pool), time.Now)
+	workers.Add(1)
+	go func() {
+		defer workers.Done()
+		worker.Run(ctx, cfg.RecurringInterval)
+	}()
+	// deferred AFTER pool.Close
+	defer func(){
+		stop()
+		workers.Wait()
+	}()
 
 	srv := &http.Server{
 		Addr: ":" + cfg.HTTPPort,

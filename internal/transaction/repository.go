@@ -81,7 +81,21 @@ func (r *PGRepository) Create(ctx context.Context, userID uuid.UUID, in NewTrans
 	}
 	// returning before comit undoes everything. after a successful comit, it does nothing, so its best to defer
 	defer func(){ _ = tx.Rollback(ctx) }()
-	qtx := r.q.WithTx(tx)  // the same queries, now running inside this transaction
+
+	t, err := RecordInTx(ctx, r.q.WithTx(tx), userID, in)
+	if err != nil {
+		return Transaction{}, err
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return Transaction{}, fmt.Errorf("commit: %w", err)
+	}
+	return t, nil
+}
+
+// RecordInTx does all the work of recording a transaction INSIDE a database
+func RecordInTx(ctx context.Context, qtx *db.Queries, userID uuid.UUID, in NewTransaction)(Transaction, error){
+	//qtx := r.q.WithTx(tx)  // the same queries, now running inside this transaction
 
 	// 1. lock the account row(prove it belongs to this user). concurrent requests for the same account will queue here
 	if _, err := qtx.LockAccountForUser(ctx, db.LockAccountForUserParams{ID: in.AccountID, UserID: userID}); err != nil{
@@ -104,7 +118,6 @@ func (r *PGRepository) Create(ctx context.Context, userID uuid.UUID, in NewTrans
 	}
 
 	// 3. store the transaction
-
 	row, err := qtx.InsertTransaction(ctx, db.InsertTransactionParams{
 		UserID: userID,
 		AccountID: in.AccountID,
@@ -140,9 +153,9 @@ func (r *PGRepository) Create(ctx context.Context, userID uuid.UUID, in NewTrans
 	}
 
 	// 6. makes it permanent
-	if err := tx.Commit(ctx); err != nil {
-		return Transaction{}, fmt.Errorf("commit: %w", err)
-	}
+	//if err := tx.Commit(ctx); err != nil {
+	//	return Transaction{}, fmt.Errorf("commit: %w", err)
+	//}
 
 	return Transaction{
 		ID: row.ID,

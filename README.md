@@ -170,6 +170,36 @@ Implemented a financial dashboard and reporting features to help users understan
 
 
 
+
+
+### Recurring Transaction Automation (Milestone 6)
+
+- Create recurring income and expense transactions.
+- Support daily, weekly, monthly, and yearly schedules.
+- Automatically process due transactions using a background worker.
+- Catch up on missed transactions after application downtime.
+- Pause, resume, update, and delete recurring transaction rules.
+- Automatically update account balances when transactions are processed.
+- Prevent duplicate recurring transactions.
+- Secure recurring rules with JWT authentication and user-level access control.
+
+### Background Worker Configuration
+
+The recurring transaction worker checks for due transactions
+at a configurable interval.
+
+Set the following environment variable in `.env`:
+
+`RECURRING_INTERVAL=1m`
+
+The worker processes due transactions automatically and
+catches up on missed occurrences after application downtime.
+
+
+
+
+
+
 API Endpoints:
 
 All endpoints except registration, login, and health checks require a JWT access token.
@@ -201,6 +231,10 @@ All endpoints except registration, login, and health checks require a JWT access
 | GET | `/api/v1/dashboard` | Retrieve financial dashboard with optional month filter | Yes |
 | GET | `/api/v1/reports/monthly` | Retrieve monthly financial report and spending comparison | Yes |
 | GET | `/api/v1/reports/categories` | Retrieve category breakdown for a date range | Yes |
+| POST | `/api/v1/recurring-transactions` | Create recurring transaction | Yes |
+| GET | `/api/v1/recurring-transactions` | List recurring transactions | Yes |
+| PATCH | `/api/v1/recurring-transactions/:id` | Update, pause, or resume a rule | Yes |
+| DELETE | `/api/v1/recurring-transactions/:id` | Delete recurring transaction rule | Yes |
 
 
 
@@ -273,4 +307,4 @@ Detailed implementation notes for each completed milestone:
 | 3 — Financial Core | [Financial Core](docs/milestones/milestone-3-financial-core.md) | Complete |
 | 4 — Budget Engine | [Budget Engine](docs/milestones/milestone-4-budget-engine.md) | Complete |
 | 5 — Insights | [Insights](docs/milestones/milestone-5-insights.md) | Complete |
-
+| 6 - Automation | [Automation](docs/milestones/milestone-6-automation.md) | Complete |

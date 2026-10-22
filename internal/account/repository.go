@@ -14,7 +14,7 @@ import(
 var(
 	ErrNotFound = errors.New("account not found")
 	ErrNameTaken = errors.New("an account with this name already exists")
-	ErrHasTransactions = errors.New("account has transactions and cannot be deleted")
+	ErrHasTransactions = errors.New("account is in use (it has transactions or recurring rules) and cannot be deleted")
 )
 const(
 	pgUniqueViolation = "23505"

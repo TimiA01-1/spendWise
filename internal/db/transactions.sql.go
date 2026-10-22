@@ -116,7 +116,7 @@ VALUES (
     $1, $2, $3,
     $4, $5, $6, $7
 )
-RETURNING id, user_id, account_id, category_id, type, amount, note, occurred_on, created_at, updated_at
+RETURNING id, user_id, account_id, category_id, type, amount, note, occurred_on, created_at, updated_at, recurring_id, recurring_for
 `
 
 type InsertTransactionParams struct {
@@ -151,6 +151,8 @@ func (q *Queries) InsertTransaction(ctx context.Context, arg InsertTransactionPa
 		&i.OccurredOn,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.RecurringID,
+		&i.RecurringFor,
 	)
 	return i, err
 }
@@ -301,7 +303,7 @@ SET account_id  = $1,
     occurred_on = $6,
     updated_at  = now()
 WHERE id = $7 AND user_id = $8
-RETURNING id, user_id, account_id, category_id, type, amount, note, occurred_on, created_at, updated_at
+RETURNING id, user_id, account_id, category_id, type, amount, note, occurred_on, created_at, updated_at, recurring_id, recurring_for
 `
 
 type UpdateTransactionParams struct {
@@ -338,6 +340,8 @@ func (q *Queries) UpdateTransaction(ctx context.Context, arg UpdateTransactionPa
 		&i.OccurredOn,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.RecurringID,
+		&i.RecurringFor,
 	)
 	return i, err
 }

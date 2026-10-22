@@ -17,6 +17,7 @@ type Config struct{
 	DatabaseURL string
 	JWTSecret string
 	JWTTTL time.Duration
+	RecurringInterval time.Duration
 }
 
 func(c *Config) IsProduction() bool{return c.Env == "production"}
@@ -28,12 +29,18 @@ func Load()(*Config, error){
 		return nil, fmt.Errorf("invalid JWT_TTL: %W", err)
 	}
 
+	interval, err := time.ParseDuration(getEnv("RECURRING_INTERVAL", "1m"))
+	if err != nil {
+		return nil, fmt.Errorf("invalid RECURRING_INTERVAL: %w", err)
+	}
+
 	cfg := &Config{
 		Env: getEnv("APP_ENV", "development"),
 		HTTPPort: getEnv("HTTP_PORT", "8080"),
 		DatabaseURL: os.Getenv("DATABASE_URL"),
 		JWTSecret: os.Getenv("JWT_SECRET"),
 		JWTTTL: ttl,
+		RecurringInterval: interval,
 	}
 	if err := cfg.validate(); err != nil{
 		return nil, err
@@ -51,6 +58,9 @@ func(c *Config) validate() error{
 	}
 	if c.JWTTTL <= 0 {
 		errs = append(errs, errors.New("JWT_TTL must be positive"))
+	}
+	if c.RecurringInterval < time.Second {
+		errs = append(errs, errors.New("RECURRING_INTERVAL must be at least 1s"))
 	}
 	return errors.Join(errs...)
 }
