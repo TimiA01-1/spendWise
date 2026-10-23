@@ -97,7 +97,8 @@ func (r *PGRepository) Create(ctx context.Context, userID uuid.UUID, in NewTrans
 func RecordInTx(ctx context.Context, qtx *db.Queries, userID uuid.UUID, in NewTransaction)(Transaction, error){
 	//qtx := r.q.WithTx(tx)  // the same queries, now running inside this transaction
 
-	// 1. lock the account row(prove it belongs to this user). concurrent requests for the same account will queue here
+	// 1. Check the account exists and belongs to this user, and lock its row until
+	//    we commit
 	if _, err := qtx.LockAccountForUser(ctx, db.LockAccountForUserParams{ID: in.AccountID, UserID: userID}); err != nil{
 		if errors.Is(err, pgx.ErrNoRows){
 			return Transaction{}, ErrAccountNotFound
